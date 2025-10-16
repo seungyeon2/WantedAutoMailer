@@ -1,41 +1,36 @@
-name: Send Job Postings Email
-
+name: Wanted Auto Mailer
 on:
   schedule:
-    - cron: '0 0 * * *'
-  workflow_dispatch:
-
-permissions:
-  contents: write
-
+    - cron: "0 23 * * *"  # 한국시간 오전 8시 (UTC 기준 23시)
+  workflow_dispatch:      # 수동 실행도 가능
 jobs:
-  build:
+  send:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: "3.10"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests
+      - name: Install deps
+        run: pip install requests
 
-      - name: Run Python script
+      - name: Run mailer
+        run: python wanted_mailer_auto.py
         env:
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
-        run: python send_emails.py
-      
+          MY_EMAIL: ${{ secrets.MY_EMAIL }}
+          MY_PASSWORD: ${{ secrets.MY_PASSWORD }}
+
       - name: Commit and push if changed
         run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add sent_jobs.txt
-          git diff --staged --quiet || (git commit -m "Update sent jobs list" && git pull --rebase && git push)
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add last_id.txt
+          git diff --staged --quiet || git commit -m "📝 Update last_id.txt [skip ci]"
+          git push
+
