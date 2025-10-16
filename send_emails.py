@@ -76,6 +76,9 @@ def send_email(config, body):
         print("이메일 비밀번호가 설정되지 않았습니다. GitHub Secrets를 확인해주세요.")
         return
 
+    # Ensure recipient email default when top-level 'email' is missing
+    config.setdefault('email', config['smtp_settings']['receiver_email'])
+
     msg = MIMEMultipart()
     msg['From'] = config['smtp_settings']['sender_email']
     msg['To'] = config['email'] # config 최상단에 있는 받는 사람 이메일 주소 사용
